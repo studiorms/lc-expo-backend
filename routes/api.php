@@ -30,13 +30,13 @@ Route::get('/tweets/{tweet}', function (Tweet $tweet) {
     return $tweet->load('user:id,name,username,avatar');
 });
 
-Route::post('/tweets', function (Request $request) {
+Route::middleware('auth:sanctum')->post('/tweets', function (Request $request) {
     $request->validate([
         'body' => 'required'
     ]);
 
     return Tweet::create([
-        'user_id' => 1,
+        'user_id' => auth()->id(),
         'body' => $request->body
     ]);
 });
