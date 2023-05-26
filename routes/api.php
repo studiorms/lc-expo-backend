@@ -38,12 +38,12 @@ Route::get('/tweets/{tweet}', function (Tweet $tweet) {
 
 Route::middleware('auth:sanctum')->post('/tweets', function (Request $request) {
     $request->validate([
-        'body' => 'required'
+        'body' => 'required',
     ]);
 
     return Tweet::create([
         'user_id' => auth()->id(),
-        'body' => $request->body
+        'body' => $request->body,
     ]);
 });
 
@@ -65,7 +65,6 @@ Route::get('/users/{user}/tweets', function (User $user) {
     return $user->tweets()->with('user:id,name,username,avatar')->latest()->paginate(10);
 });
 
-
 Route::post('/login', function (Request $request) {
     $request->validate([
         'email' => 'required|email',
@@ -75,7 +74,7 @@ Route::post('/login', function (Request $request) {
 
     $user = User::where('email', $request->email)->first();
 
-    if (!$user || !Hash::check($request->password, $user->password)) {
+    if (! $user || ! Hash::check($request->password, $user->password)) {
         throw ValidationException::withMessages([
             'email' => ['The provided credentials are incorrect.'],
         ]);
@@ -107,11 +106,26 @@ Route::post('/register', function (Request $request) {
         'name' => $request->name,
         'email' => $request->email,
         'username' => $request->username,
-        'password' => Hash::make($request->password)
+        'password' => Hash::make($request->password),
     ]);
 
     $user->follows()->attach($user);
 
-    return response()->json($user,201);
+    return response()->json($user, 201);
 });
 
+Route::middleware('auth:sanctum')->post('/follow/{user}', function (User $user) {
+    auth()->user()->follow($user);
+
+    return response()->json('Followed', 201);
+});
+
+Route::middleware('auth:sanctum')->post('/unfollow/{user}', function (User $user) {
+    auth()->user()->unfollow($user);
+
+    return response()->json('Unfollowed', 201);
+});
+
+Route::middleware('auth:sanctum')->get('/is_following/{user}', function (User $user) {
+    return response()->json(auth()->user()->isFollowing($user), 200);
+});
